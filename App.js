@@ -1,111 +1,110 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import React, {useState, useEffect} from 'react';
 
-import React from 'react';
-import type {Node} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {Text, View, ImageBackground, StyleSheet} from 'react-native';
+import {Button} from 'react-native-paper';
+import {WebView} from 'react-native-webview';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {auth} from './config/firebase';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
+  const [show, setShow] = useState({isOpen: false, url: null});
+  const [customToken, setCustomToken] = useState(null);
+
+  const handleWebViewNavigationStateChange = newNavState => {
+    const {url} = newNavState;
+
+    if (url.includes('customToken')) {
+      const token = url.split('customToken=')[1];
+      setCustomToken(token);
+      setShow({isOpen: false, url: null});
+    }
+  };
+
+  useEffect(() => {
+    // signInWithCustomToken
+    if (customToken) {
+      auth
+        .signInWithCustomToken(customToken)
+        .then(user => {
+          // eslint-disable-next-line no-alert
+          alert(`Logged in as ${auth.currentUser.email}`);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [customToken]);
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.container}>
+      <ImageBackground
+        style={styles.image}
+        source={{uri: 'https://source.unsplash.com/random/400x800'}}>
+        <Text style={styles.text}>Acme Limited</Text>
+        <View style={styles.bar}>
+          <Button
+            style={styles.button}
+            mode="contained"
+            onPress={() =>
+              setShow({
+                isOpen: true,
+                url: 'https://react-login-page-ruby.vercel.app/login',
+              })
+            }>
+            Login
+          </Button>
+          <Button
+            style={styles.button}
+            mode="contained"
+            onPress={() =>
+              setShow({
+                isOpen: true,
+                url: 'https://react-login-page-ruby.vercel.app/signup',
+              })
+            }>
+            Signup
+          </Button>
+          <Button
+            style={styles.button}
+            mode="contained"
+            onPress={() => setShow({isOpen: false, url: null})}>
+            Exit
+          </Button>
+        </View>
+        {show.isOpen && (
+          <WebView
+            source={{uri: show.url}}
+            onNavigationStateChange={handleWebViewNavigationStateChange}
+          />
+        )}
+      </ImageBackground>
     </View>
   );
 };
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    flexDirection: 'column',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  image: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  bar: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
   },
-  highlight: {
-    fontWeight: '700',
+  text: {
+    color: 'white',
+    fontSize: 42,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  button: {
+    marginTop: 4,
+    marginBottom: 4,
+    marginLeft: 6,
+    marginRight: 6,
   },
 });
 
